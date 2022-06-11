@@ -1,0 +1,4 @@
+//my external ip
+router = get_router
+if not router then exit("Not connected to the network.")
+print("My public IP: "+router.public_ip)
