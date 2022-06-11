@@ -1,0 +1,74 @@
+//RESULTS objects
+
+Result = {"IP":"","PORT":0,"USER_PASSWD_CHANGED":0,"ROOT_PASSWD":0,"PASSWD":0,"SSH":0,"USERS":[],"root_shells":[],"user_shells":[],"guest_shells":[],"root_computers":[],"user_computers":[],"guest_computers":[]}
+Result.shells = function()
+	return self.root_shells + self.user_shells + self.guest_shells
+end function
+Result.computers = function()
+	return self.root_computers + self.root_shells + self.user_computers + self.user_shells + self.guest_computers + self.guest_shells
+end function
+Result.push = function(input)
+	if typeof(input) == "shell" then
+		com = input.host_computer
+		if com then
+			root_folder = com.File("/root")
+			if root_folder then 
+				if com.File("/root").has_permission("w") then 
+					self.root_shells.push(input)
+					if input.host_computer.change_password("root", "toor") == 1 then self.USER_PASSWD_CHANGED = 1
+					return
+				end if
+			end if
+			home_folder = com.File("/home")
+			if home_folder then
+				person = false
+				for folder in home_folder.get_folders
+					if not folder then continue
+					if self.USERS.indexOf(folder.name) == null then self.USERS.push(folder.name)
+					if folder.name != "guest" and folder.has_permission("r") then 
+						self.user_shells.push(input)
+						person = true
+						break
+					end if
+				end for
+				if not person then self.guest_shells.push(input)
+			end if
+		end if
+	end if
+	if typeof(input) == "computer" then
+		root_folder = input.File("/root")
+		if root_folder then
+			if root_folder.has_permission("w") then 
+				self.root_computers.push(input)
+				if input.change_password("root", "toor") == 1 then self.USER_PASSWD_CHANGED = 1
+				return
+			end if
+			home_folder = input.File("/home")
+			if home_folder then
+				person = false
+				for folder in home_folder.get_folders
+					if not folder then continue
+					if self.USERS.indexOf(folder.name) == null then self.USERS.push(folder.name)
+					if folder.name != "guest" and folder.has_permission("r") then 
+						self.user_computers.push(input)
+						person = true
+						break
+					end if
+				end for
+				if not person then self.guest_computers.push(input)
+			end if
+		end if
+	end if
+	if typeof(input) == "number" then
+		self.USER_PASSWD_CHANGED = 1
+	end if
+	if typeof(input) == "file" then
+		if input.name == "passwd" or input.name == "etc" then
+			if input.name == "etc" then 
+				input = input.get_files[0]
+				if input.name != "passwd" or not input.has_permission("r") then return
+			end if
+			self.PASSWD = input
+		end if
+	end if
+end function
