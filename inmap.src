@@ -1,0 +1,56 @@
+//Improved nmap
+if params.len != 1 or params[0] == "-h" or params[0] == "--help" then exit("portscan [ip]")	
+if not is_valid_ip(params[0]) then exit("portscan: invalid ip address")
+if not get_shell.host_computer.is_network_active then exit("portscan: can't connect. No internet access.")
+
+ipAddress = params[0]
+isLanIp = is_lan_ip( ipAddress )
+
+if isLanIp then
+	router = get_router;
+else 
+	router = get_router( ipAddress )
+end if
+
+if router == null then exit("portscan: ip address not found")
+ports = null
+
+if not isLanIp then
+	ports = router.used_ports
+else
+	ports = router.computer_ports(ipAddress)
+end if
+
+if ports == null then exit("portscan: ip address not found")
+if typeof(ports) == "string" then exit("portscan: address unreachable")
+
+info = range(0,254)
+
+print("INTRANET PORTSCANNER at " + current_date + " on " + params[0])
+print("--------------------------")
+
+ipcounter = 0
+
+ips = router.computers_lan_ip
+
+for ip in ips
+	ipcounter = ipcounter + 1
+	print("<color=red>LAN IP: "+ip)
+	print("Port State Service Version")
+	if is_lan_ip(ip) then ports = router.computer_ports(ip)
+	for port in ports
+		service_info = router.port_info(port)
+		//lan_ips = port.get_lan_ip
+		port_status = "<color=green>open</color=green>"
+		
+		if(port.is_closed and not isLanIp) then
+			port_status = "<color=purple>closed</color=purple>"
+		end if
+		info[ipcounter] = "<color=white>" + port.port_number + "</color=white>" + " " + port_status + " " + service_info
+		print(format_columns(info[ipcounter]))
+	end for
+	print("--------------")
+	if ipcounter > ips.len then exit()
+	
+	
+end for
