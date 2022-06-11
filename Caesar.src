@@ -1,0 +1,37 @@
+//Caesar encrypt algorithm
+
+encrypt = function(msg,off)
+	encrypted = ""
+	msg = msg.lower
+	for i in range(0,msg.len-1)
+		ch = msg[i]
+		encrypted = encrypted + char(((ch.code + off - 97) % 27 + 97))
+	end for
+	return encrypted.upper
+end function
+
+decrypt = function(msg,off,length)
+LETTERS="ABCDEFGHIJKLMNOPQRSTUVWXYZ"+char(8)
+translated = ""
+
+	for key in range(off,LETTERS.len-1)
+		for symbol in msg
+			if symbol.hasIndex(LETTERS) then
+				num = LETTERS.indexOf(symbol)
+				//print(num)
+				num = num - key
+				if num < 0 then
+					num = num + LETTERS.len-1
+				end if
+				translated = translated + LETTERS[num]
+			else
+				translated = translated + symbol
+			end if
+		end for
+		if length <= msg.len then return translated
+	end for
+	return translated
+end function
+
+print(encrypt("hi motherfuckers",30))
+print(decrypt("LMXQSXLIVJYGOIVW",30,15))
