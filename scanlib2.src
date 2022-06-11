@@ -1,0 +1,89 @@
+//scanlib2
+
+host = get_shell.host_computer
+
+get_metaxploit = function()
+	metaxploit = include_lib("/lib/metaxploit.so")
+	if not metaxploit then
+		metaxploit = include_lib(host.current_path + "/metaxploit.so")
+		if not metaxploit then 
+			exit("Unable to load metaxploit.so")
+		end if
+	end if
+	
+	return metaxploit
+end function
+
+metaxploit = get_metaxploit
+
+if params.len == 0 or params.len > 2 then
+	exit("<b>Usage: [path to lib || ip address] [port (if using ip address)]</b")
+end if
+
+location = params[0]
+
+if is_valid_ip(location) then
+	if params.len == 2 then
+		port = params[1].val
+		netsession = metaxploit.net_use(location, port)
+	else
+		netsession = metaxploit.net_use(location)
+	end if
+	lib = netsession.dump_libs
+else
+	lib = metaxploit.load(location)
+end if
+
+if not lib then 
+	exit("Unable to get lib, make sure you typed in the ip address or path correctly.")
+end if
+
+// support for scanning kernel_router.so
+if typeof(lib) != "MetaLib" then
+	for libs in lib
+		if libs.lib_name == "kernel_router.so" then
+			lib = libs
+			break
+		end if
+	end for
+end if
+
+print("Scanning " + lib.lib_name + " v" + lib.version)
+vulns = metaxploit.scan(lib)
+
+if not vulns then exit("Unable to scan, an error occurred.")
+
+vulnsText = ""
+for vuln in vulns
+	vulnsText = vulnsText + "--------------------------------------------------\n"
+	vulnsText = vulnsText + "Memloc: " + vuln + "\n\n"
+	lines = metaxploit.scan_address(lib, vuln).split("\n")
+	lines.remove(0)
+	lines.remove(0)
+	for line in lines
+		while line.indexOf("<b>")
+			line = line.replace("<b>", """")
+		end while
+		
+		while line.indexOf("</b>")
+			line = line.replace("</b>", """")
+		end while
+		
+		vulnsText = vulnsText + line + "\n"
+	end for
+end for
+
+vulnsText = vulnsText + "--------------------------------------------------\n"
+
+pathName = home_dir + "/vulns"
+fileName = lib.lib_name + "." + lib.version + ".txt"
+host.create_folder(home_dir, "vulns")
+if not host.touch(pathName, fileName) then 
+	exit("Unable to create file")
+end if
+
+outFile = host.File(pathName + "/" + fileName)
+if outFile then
+	outFile.set_content(vulnsText)
+	print("Wrote the analysis of " + vulns.len + " memory location(s) to file " + outFile.path)
+end if
