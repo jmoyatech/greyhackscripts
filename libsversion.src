@@ -1,0 +1,7 @@
+//libsversion
+meta = include_lib("/lib/metaxploit.so")
+print("net.so: "+meta.load("/lib/net.so").version)
+print("init.so: "+meta.load("/lib/init.so").version)
+print("kernel_module.so: "+meta.load("/lib/kernel_module.so").version)
+print("crypto.so: "+meta.load("/lib/crypto.so").version)
+print("metaxploit.so: "+meta.load("/lib/metaxploit.so").version)
