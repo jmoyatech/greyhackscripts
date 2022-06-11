@@ -1,0 +1,178 @@
+//MASSIVE BANK STEALER (ON BTC)
+
+if params.len != 3 or params[0] == "-h" or params[0] == "--help" then exit("<b>Usage: "+program_path.split("/")[-1]+" [start_ip_address] [port] [A|B|C|D]</b>")
+metaxploit = include_lib("/lib/metaxploit.so")
+if not metaxploit then
+	currentPath = get_shell.host_computer.current_path
+	metaxploit = include_lib(currentPath + "/metaxploit.so")
+end if
+if not metaxploit then exit("Error: Can't find metaxploit library in the /lib path or the current folder")
+
+net_session = null
+metaLib = null
+
+address = params[0]
+host = get_shell.host_computer
+bankinfo = host.File(home_dir+"/"+"bankdump.txt")
+if not bankinfo then host.touch(home_dir+"/", "bankdump.txt")
+
+port = params[1].to_int
+
+bankreader = function(result)
+	if result.path == "/home" then
+		AccessBankFile(result)
+	else
+		while not result.path == "/"
+			result = result.parent
+		end while
+		
+		folders = result.get_folders
+		for folder in folders
+			if folder.path == "/home" then
+				AccessBankFile(folder)
+			end if
+		end for
+	end if
+end function
+
+AccessBankFile = function(homeFolder)
+	folders = homeFolder.get_folders
+	for user in folders
+		subFolders = user.get_folders
+		for subFolder in subFolders
+			if subFolder.name == "Config" then
+				files = subFolder.get_files
+				for file in files
+					if file.name == "Bank.txt" then
+						bankdump = host.File(home_dir+"/"+"bankdump.txt")
+						bankdump.set_content(bankdump.content + "\n" + file.content)
+					end if
+				end for
+			end if
+		end for
+	end for
+end function
+
+exploiter = function(metaLib, mem)
+	for mem in memory
+		address = metaxploit.scan_address(metaLib, mem).split("Unsafe check: ")
+		
+		for add in address
+			if add == address[0] then continue
+			value = add[add.indexOf("<b>")+3:add.indexOf("</b>")]
+			value = value.replace("\n","")
+			result = metaLib.overflow(mem, value)
+			if typeof(result) != "shell" and typeof(result) != "computer" and typeof(result) != "file" then continue
+			if typeof(result) == "file" then bankreader(result)			
+		end for
+	end for
+end function
+
+
+if params[2] == "D" or params[2] == "d" then
+	startrange = address.split(".")[-1].to_int 
+	csegment = address.split(".")[-2].to_int
+	bsegment = address.split(".")[-3].to_int
+	asegment = address.split(".")[-4].to_int
+	ip = str(asegment) + "." + str(bsegment) + "." + str(csegment) + "."
+	for i in range(startrange,254)
+		net_session = metaxploit.net_use(ip+str(i), port)
+		if not net_session then continue
+		metaLib = net_session.dump_lib
+		memory = metaxploit.scan(metaLib)
+		exploiter(metaLib,memory)
+	end for
+end if
+
+if params[2] == "C" or params[2] == "c" then
+	startrange = address.split(".")[-2].to_int 
+	dsegment = address.split(".")[-1].to_int
+	bsegment = address.split(".")[-3].to_int
+	asegment = address.split(".")[-4].to_int
+	ip = str(asegment) + "." + str(bsegment) + "."
+	for i in range(startrange,254)
+		print("<color=red>"+ip + str(i) + "." + str(dsegment)+"</color=red>")
+		net_session = metaxploit.net_use(ip + str(i) + "." + str(dsegment), port)
+		if not net_session then continue
+		metaLib = net_session.dump_lib
+		memory = metaxploit.scan(metaLib)
+		exploiter(metaLib,memory)
+	end for
+end if
+
+if params[2] == "B" or params[2] == "b" then
+	startrange = address.split(".")[-3].to_int 
+	dsegment = address.split(".")[-1].to_int
+	csegment = address.split(".")[-2].to_int
+	asegment = address.split(".")[-4].to_int
+	ip = str(asegment) + "." 
+	for i in range(startrange,254)
+		print("<color=red>"+ip+str(i)+ "." + str(csegment) + "." + str(dsegment)+"</color=red>")
+		net_session = metaxploit.net_use(ip+str(i)+ "." + str(csegment) + "." + str(dsegment), port)
+		if not net_session then continue
+		metaLib = net_session.dump_lib
+		memory = metaxploit.scan(metaLib)
+		exploiter(metaLib,memory)
+	end for
+end if
+
+if params[2] == "A" or params[2] == "a" then
+	startrange = address.split(".")[-4].to_int 
+	dsegment = address.split(".")[-1].to_int
+	csegment = address.split(".")[-3].to_int
+	bsegment = address.split(".")[-2].to_int
+	ip = "." + str(bsegment) + "." + str(csegment) + "." + str(dsegment)
+	for i in range(startrange,254)
+		print("<color=red>"+str(i)+ ip +"</color=red>")
+		net_session = metaxploit.net_use(str(i)+ip, port)
+		if not net_session then continue
+		metaLib = net_session.dump_lib
+		memory = metaxploit.scan(metaLib)
+		exploiter(metaLib,memory)
+	end for
+end if
+
+
+
+
+
+// MASSIVE BANK DECIPHER (FOR THE PREVIOUS SCRIPT)
+cryptools = include_lib("/lib/crypto.so")
+if not cryptools then exit("Error: Missing crypto library")
+host = get_shell.host_computer
+
+
+GetPassword = function(userPass)
+	if userPass.len != 2 then return("bankingdecipher: wrong syntax")
+	password = cryptools.decipher(userPass[0], userPass[1])
+	return password
+end function
+
+if params.len != 1 or params[0] == "-h" or params[0] == "--help" then exit("Usage: bankingdecipher [encrypted file hashes]")
+
+origFile = params[0]
+file = get_shell.host_computer.File(origFile)
+if file then
+	if not file.has_permission("r") then exit("can't read file. Permission denied")
+	if file.content.len == 0 then exit("bankingdecipher: no users found")
+	lines = file.content.split("\n")
+else if origFile.len > 33 then
+	lines = [origFile]
+else
+	exit("bankingdecipher: can't find " + origFile)
+end if
+
+
+for line in lines
+	userPass = line.split(":")
+	password = GetPassword(userPass)
+	if not password then print("Can't find password :(")
+	//if password then print(password)
+	if password then
+		bankpasswds = host.File(home_dir+"/"+"bankaccs.txt")
+		if not bankpasswds then host.touch(home_dir+"/","bankaccs.txt")
+		bankpasswds = host.File(home_dir+"/"+"bankaccs.txt")
+		bankpasswds.set_content(bankpasswds.content + "\n" + userPass[0]+":"+password)
+	end if
+	
+end for
