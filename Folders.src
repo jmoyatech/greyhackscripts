@@ -1,0 +1,20 @@
+//GOES THROUGH ALL FOLDERS
+
+host = get_shell.host_computer
+user = active_user
+encrypter = host.File(program_path)
+rootdir = host.File("/")
+rootfolders = rootdir.get_folders
+files = []
+subfolders = []
+
+for folder in rootfolders
+	subfolders = subfolders + folder.get_folders
+	for subfolder in subfolders
+		files = subfolder.get_files
+		for file in files
+			if not file.is_binary then print(file.path)
+		end for
+		subfolders = subfolder.get_folders
+	end for
+end for
