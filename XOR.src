@@ -1,0 +1,150 @@
+//Simple XOR encrypter
+
+Encrypt = function(input, key)
+	crypt_hex = []
+	key_index = 0
+	crypt_binary = []
+	key_binary = []
+	for k in key
+		k = k.code
+		for i in range(7,0,-1)
+			key_binary.push(floor(k/(2^i)))
+			k = k % (2^i)
+		end for
+	end for
+	for c in input
+		c = c.code
+		new_byte = []
+		for i in range(7,0,-1)
+			new_byte.push((floor(c/(2^i))!=key_binary[key_index%key_binary.len]))
+			c = c % (2^i)
+			key_index = key_index + 1
+		end for
+		new_byte.reverse
+		val = 0
+		for i in range(7,0,-1)
+			val = val + (new_byte[i] * (2^i))
+		end for
+		val1 = floor(val/16)
+		val = val%16
+		if val1 < 10 then
+			crypt_hex.push(val1)
+		else if val1 == 10 then 
+			crypt_hex.push("a")
+		else if val1 == 11 then 
+			crypt_hex.push("b")
+		else if val1 == 12 then 
+			crypt_hex.push("c")
+		else if val1 == 13 then 
+			crypt_hex.push("d")
+		else if val1 == 14 then 
+			crypt_hex.push("e")
+		else 
+			crypt_hex.push("f")
+		end if
+		if val < 10 then
+			crypt_hex.push(val)
+		else if val == 10 then 
+			crypt_hex.push("a")
+		else if val == 11 then 
+			crypt_hex.push("b")
+		else if val == 12 then 
+			crypt_hex.push("c")
+		else if val == 13 then 
+			crypt_hex.push("d")
+		else if val == 14 then 
+			crypt_hex.push("e")
+		else 
+			crypt_hex.push("f")
+		end if
+	end for
+	return crypt_hex.join("")
+end function
+
+Decrypt = function(input, key)
+	crypt_chars = []
+	key_binary = []
+	key_index = 0
+	for k in key
+		k = k.code
+		for i in range(7,0,-1)
+			key_binary.push(floor(k/(2^i)))
+			k = k % (2^i)
+		end for
+	end for
+	for hh in range(1,input.len-1,2)
+		byte = []
+		new_char = 0
+		val = 0
+		if typeof(input[hh-1].to_int) == "number" then
+			tmp = input[hh-1].to_int
+			for i in range (3,0,-1)
+				byte.push(floor(tmp/(2^i)))
+				tmp = tmp % (2^i)
+			end for
+		else if input[hh-1] == "a" then
+			byte.push("1010")
+		else if input[hh-1] == "b" then
+			byte.push("1011")
+		else if input[hh-1] == "c" then
+			byte.push("1100")
+		else if input[hh-1] == "d" then
+			byte.push("1101")
+		else if input[hh-1] == "e" then
+			byte.push("1110")
+		else
+			byte.push("1111")
+		end if
+		if typeof(input[hh].to_int) == "number" then
+			tmp = input[hh].to_int
+			for i in range (3,0,-1)
+				byte.push(floor(tmp/(2^i)))
+				tmp = tmp % (2^i)
+			end for
+		else if input[hh] == "a" then
+			byte.push("1010")
+		else if input[hh] == "b" then
+			byte.push("1011")
+		else if input[hh] == "c" then
+			byte.push("1100")
+		else if input[hh] == "d" then
+			byte.push("1101")
+		else if input[hh] == "e" then
+			byte.push("1110")
+		else
+			byte.push("1111")
+		end if
+		pow = 7
+		for b in byte.join("")
+			new_char = new_char + ((b!=key_binary[abs(key_index)%key_binary.len]) * (2^pow))
+			pow = pow - 1
+			key_index = key_index + 1
+		end for
+		crypt_chars.push(char(new_char))
+	end for
+	return crypt_chars.join("")
+end function
+
+decrypt = 0
+if params.len < 6 then exit("xor -e/d [source path] -o [output path] -k [key]")
+if params.indexOf("-k") == null then exit("xor -e/d [source path] -o [output path] -k [key]")
+key = params[params.indexOf("-k")+1]
+if params.indexOf("-e") == null and params.hasIndex("-d") == null then exit("xor -e/d [source path] -o [output path] -k [key]")
+if params.indexOf("-o") == null then exit("xor -e/d [source path] -o [output path] -k [key]")
+if params.indexOf("-e") != null then source_path = params[params.indexOf("-e")+1]
+if params.indexOf("-d") != null then 
+	source_path = params[params.indexOf("-d")+1]
+	decrypt = 1
+end if
+output_path = params[params.indexOf("-o")+1]
+source_file = get_shell.host_computer.File(source_path)
+if not source_file or not source_file.has_permission("r") then exit("failed to read source file")
+output_file = get_shell.host_computer.File(output_path)
+	if not output_file then
+		if get_shell.host_computer.touch(output_path[:output_path.lastIndexOf("/")],output_path[output_path.lastIndexOf("/")+1:]) != 1 then exit("failed to create output_file")
+		output_file = get_shell.host_computer.File(output_path)
+	end if
+if decrypt then
+	output_file.set_content(Decrypt(source_file.content, key))
+else
+	output_file.set_content(Encrypt(source_file.content, key))
