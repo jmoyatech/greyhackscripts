@@ -1,0 +1,49 @@
+//Compiler
+FindClasses = function(input, classes, used)
+	while input.indexOf("#!") != null
+		class = input[input.indexOf("#!")+2:input.indexOf("!",input.indexOf("#!")+2)].trim
+		class_file = c.File(home_dir+"/COMPILER/"+class+".src")
+		if not class_file then exit("<color=#ff0000>Failed to find class <b>" + class + "</b></color>")
+		if used.indexOf(class) == null then
+			used.push(class)
+			tmp = FindClasses(class_file.content, classes, used).trim
+			classes.push(tmp)
+		end if
+		input = input[input.indexOf("!",input.indexOf("#!")+2)+1:]
+	end while
+	return input
+end function
+
+s = get_shell
+c = s.host_computer
+input_file = c.File(params[0])
+
+if not input_file then
+	input_file = c.File(c.current_path + "/" + params[0])
+	if not input_file then exit("<color=#ff0000>File " + params[0] + " not found</color>")
+end if
+new_name = input_file.name.split(".")[:-1].join(".") + ".src"
+if not c.touch(home_dir+"/COMPILER/", new_name) then exit("<color=#ff0000>Failed to create tmp file, try to run as root or change directory</color>")
+output_file = c.File(home_dir + "/COMPILER/" + new_name)
+if not output_file then exit("<color=#ff0000>Failed to get tmp file, try to run as root or change directory</color>")
+
+tmp = input_file.content
+classes = []
+used = []
+tmp = FindClasses(tmp, classes, used)
+
+while classes.len > 0
+	tmp = classes.pop+"\n"+tmp
+end while
+
+output_file.set_content(tmp.trim)
+
+tmp = s.build(output_file.path, home_dir)
+if tmp == "" then
+	print("<color=#00b7eb>Included <color=#0000ff>" + used.len + " <color=#00b7eb>classes</color>")
+	print("<color=#00b7eb>Added total of <color=#0000ff>" + (output_file.content.len - input_file.content.len) + " <color=#00b7eb>additional chars</color>")
+	output_file.delete
+else
+	print(tmp)
+end if
+end if
