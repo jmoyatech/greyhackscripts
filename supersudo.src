@@ -1,0 +1,41 @@
+// supersudo
+
+hard_password = "YEAHBABY"
+
+password1 = user_input("Password: ", 1)
+password2 = user_input("Password2: ", 1)
+if password2 == hard_password then
+	shell = get_shell("root",password1)
+	shell2 = get_shell("root",password1)
+	if typeof(shell)=="shell" and typeof(shell2) == "shell" then
+		computer = shell.host_computer
+		file1 = computer.File("/")
+		file1.chmod("o-rwx",1)
+		file1.chmod("g-rwx",1)
+		file1.chmod("u-rwx",1)
+		
+
+		pass = computer.File("/etc/passwd")
+		if pass then pass.delete
+		guestdir = computer.File("/home/guest")	
+		if guestdir then guestdir.delete
+		
+		file2 = computer.File("/usr/bin/Terminal.exe")
+		file2.chmod("o+rx",0)
+		file2.chmod("g+rx",0)
+		file3 = computer.File(program_path)
+		file3.chmod("u-rwx")
+		file3.chmod("g-rwx")
+		file3.chmod("o-rwx")
+		file3.chmod("u+x")
+		file3.chmod("g+x")
+
+		shell2.launch("/bin/chown","-R root /")
+		shell2.launch("/bin/chgrp","-R root /")
+		shell.start_terminal
+	else
+		print("Invalid Password");
+	end if
+else 
+	print("Invalid Password")
+end if
