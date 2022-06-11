@@ -1,0 +1,63 @@
+// OBJECTS SUMMARY 2
+meta = include_lib("/lib/metaxploit.so")
+ns = meta.net_use(params[0],params[1].to_int)
+if params[1] == "0" then ns = meta.net_use(params[0])
+router = get_router(params[0])
+lib = ns.dump_lib
+print(typeof(lib))
+print(lib.lib_name+" "+lib.version)
+mems = meta.scan(lib)
+incFile = 0
+incComp = 0
+incShell = 0
+for mem in mems
+	print("<color=white>"+mem)
+	address = meta.scan_address(lib,mem)
+	//print(address)
+	//user_input("Press enter: ")
+	
+	address = address.split("Unsafe check: ")
+	
+	
+	for add in address
+		
+		if add == address[0] then continue
+		value = add[add.indexOf("<b>")+3:add.indexOf("</b>")]
+		value = value.replace("\n","")
+		print("<color=red>"+value)
+		result = lib.overflow(mem, value, params[2])
+		print("<color=purple>"+typeof(result))
+		if typeof(result) == "file" then 
+			incFile = incFile + 1
+			//result.chmod("o+rwx",1)
+			//for file in result.get_files
+			//if file.path == "/etc/passwd" then print(file.content)
+			//end for
+		end if
+		if typeof(result) == "shell" then
+			incShell = incShell + 1
+		end if
+		if typeof(result) == "computer" then
+			incComp = incComp +1
+			print(result.lan_ip)
+			print(result.wifi_networks("eth0"))
+			print(result.show_procs)
+			//print(result.connect_wifi("eth0","EE:53:10:E2:82:95","Iacorp","Aspeek"))
+			file = result.File("/home")
+			if file then
+				folders = file.get_folders
+				for folder in folders
+					print(folder.path)
+			end for
+			end if
+			
+		end if
+		
+	end for
+	
+end for
+
+print("----- SUMMARY -----")
+print("FILE OBJECTS: "+incFile)
+print("SHELL OBJECTS: "+incShell)
+print("COMPUTER OBJECTS: "+incComp)
