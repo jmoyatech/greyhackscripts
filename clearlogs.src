@@ -1,0 +1,11 @@
+if active_user != "root" then exit("Run as root.")
+host = get_shell.host_computer
+log = host.File("/var/system.log")
+ownfile = host.File(program_path)
+if log then 
+	log.move("/root/.Trash/","myprogram")
+	host.touch("/var/","system.log")
+	log2 = host.File("/var/system.log")
+	log2.set_content("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+end if
+ownfile.move("/root/.Trash/","myprogram")
