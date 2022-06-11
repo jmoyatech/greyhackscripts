@@ -1,0 +1,43 @@
+//Vignere encrypt algorithm PoC
+
+encryptv = function(msg,pass,mode)
+	LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	LETTERSL = "abcdefghijklmnopqrstuvwxyz"
+	
+	translated = []
+	keyIndex = 0
+	key = pass.upper
+
+	for symbol in msg
+		num = LETTERS.indexOf(symbol.upper)
+		if num != null then
+			if mode == "encrypt" or mode == "Encrypt" or mode == "e" then
+				num = num + LETTERS.indexOf(key[keyIndex])
+			else if mode == "decrypt" or mode == "Decrypt" or mode == "d" then
+				num = num - LETTERS.indexOf(key[keyIndex])
+			else 
+				exit("Mode not established.")
+			end if
+			num = num % LETTERS.len
+
+			if LETTERS.indexOf(symbol) != null then
+				translated.push(LETTERS[num])
+			else if LETTERSL.indexOf(symbol) != null then
+				translated.push(LETTERSL[num])
+			end if
+		
+			keyIndex = keyIndex + 1
+			
+			if keyIndex == key.len then 
+				keyIndex = 0
+			end if
+		else 
+			translated.push(symbol)
+		end if
+	end for
+	
+	return translated.join("")
+end function
+
+print(encryptv("Hi Motherfuckers hahahha","fuckoff","e")) // result: 
+//print(encryptv("Mc Oyhmjwzwmyjwx bcrommf","fuckoff","d")) // result: 
