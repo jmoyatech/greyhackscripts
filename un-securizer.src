@@ -1,0 +1,38 @@
+//SECURIZER SECLOCAL (NOT FOR BTC) 
+if params.len != 1 or params[0] == "-h" or params[0] == "--help" then exit("Usage: seclocal USER")
+user = params[0]
+masks = ["u-rwx", "g-rwx", "o-rwx"]
+
+if active_user != "root" then exit("Run as root.")
+host = get_shell.host_computer
+
+get_shell.launch("/bin/cp", "/bin/sudo /bin/xu")
+host.File("/bin/sudo").delete
+
+host.touch("/etc","passwd")
+host.File("/etc/passwd").delete
+host.touch("/home/guest","guesttouch")
+host.File("/home/guest").delete
+host.File("/").chmod("o-rwx", 1)
+
+//host.touch("/home/"+user+"/Config/","configtouch")
+config = host.File("/home/"+user+"/Config/")
+if config.is_folder then
+	files = config.get_files
+end if
+
+for file in files
+	for mask in masks
+		host.File("/home/"+user+"/Config/"+file.name).chmod(mask)
+	end for
+end for
+
+print("Done! sudo is now xu")
+
+
+
+//UNSECURIZER unsecserver (NO PARA BTC)
+if active_user != "root" then exit("Run as root")
+host = get_shell.host_computer
+host.File("/").chmod("u+rwx", 1)
+print("Done!")
