@@ -1,0 +1,4 @@
+if params.len != 3 then exit("Usage: connectwifi [bssid] [essid] [password]")
+host = get_shell.host_computer
+if host.connect_wifi("eth0",params[0],params[1],params[2]) then exit("Connection successful.")
+exit("Could not connect.")
