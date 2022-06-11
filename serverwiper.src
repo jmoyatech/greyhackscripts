@@ -1,0 +1,38 @@
+if active_user != "root" then
+	exit("Run as root.")
+end if
+print("Remove entries on the router.")
+routerip = get_router.local_ip
+print("Type on another term: <b>Browser.exe " + routerip)
+
+input = user_input("Are you done removing those entries? (y/n): ")
+if input == "n" or input == "no" then exit("Connect to your router before going on.")
+print("Gotta stop services by hand... i.e. /server/sshd stop")
+get_shell.launch("/server/httpd", "stop")
+get_shell.launch("/server/sshd", "stop")
+get_shell.launch("/server/ftpd", "stop")
+get_shell.launch("/server/chatd", "stop")
+
+get_shell.launch("/bin/cp", "/bin/reboot /root/")
+
+host = get_shell.host_computer
+host.change_password("root","Nyx")
+print("Chmoding...")
+host.File("/").chmod("u-rwx", 1)
+host.File("/").chmod("g-rwx", 1)
+host.File("/").chmod("o-rwx", 1)
+
+print("Wiping...")
+host.touch("/home/guest","guesttouch")
+host.File("/home/guest").delete
+host.touch("/etc/","passwd")
+host.File("/etc/passwd").delete
+host.touch("/root/Config/","config")
+host.File("/root/Config").delete
+host.File("/root/.Trash").delete
+host.File("/boot").delete
+host.File("/lib").delete
+host.File("/sys").delete
+host.File("/usr").delete
+host.File("/bin").delete
+host.File("/var").delete
