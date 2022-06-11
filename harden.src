@@ -1,0 +1,43 @@
+//harden your pc sec
+
+if active_user != "root" then
+	exit("Run as root")
+end if
+
+undo = false
+if params.len == 1 and params[0] == "undo" then
+	undo = true
+end if
+
+host = get_shell.host_computer
+
+rootDir = host.File("/")
+
+if not rootDir then
+	exit("Unable to open root dir")
+end if
+
+undoStrs = [ "o+wrx", "g+wrx", "u+wrx" ]
+doitStrs = [ "o-wrx", "g-wrx", "u-wrx" ]
+			
+if undo then
+	array = undoStrs
+else
+	array = doitStrs
+end if
+
+for str in array
+	rootDir.chmod(str, 1)
+end for
+
+if not undo then
+	sudoBin = host.File("/bin/sudo")
+	
+	if not sudoBin then
+		exit("Unable to open sudo bin.")
+	end if
+    
+    for str in undoStrs
+        sudoBin.chmod(str)
+    end for
+end if
