@@ -1,0 +1,44 @@
+//simple scan mem and objects summary
+metaXP = include_lib("/lib/metaxploit.so")
+ns = metaXP.net_use(params[0],params[1].to_int)
+libs = ns.dump_lib
+print(libs.lib_name+" "+libs.version)
+mems = metaXP.scan(libs)
+for mem in mems
+	print("<color=red>"+mem)
+	print(metaXP.scan_address(libs,mem))
+end for
+
+
+//Objects summary 1
+
+meta = include_lib("/lib/metaxploit.so")
+ns = meta.net_use(params[0],params[1].to_int)
+lib = ns.dump_lib
+print(lib.lib_name+" "+lib.version)
+mems = meta.scan(lib)
+incFile = 0
+incComp = 0
+incShell = 0
+for mem in mems
+	print(mem)
+	address = meta.scan_address(lib,mem)
+	address = address.split("Unsafe check: ")
+	for add in address
+		if add == address[0] then continue
+		value = add[add.indexOf("<b>")+3:add.indexOf("</b>")]
+		print(value)
+		value = value.replace("\n","")
+		result = lib.overflow(mem, value, "pass")
+		print(typeof(result))
+		if typeof(result) == "file" then incFile = incFile + 1
+		if typeof(result) == "shell" then incShell = incShell + 1
+		if typeof(result) == "computer" then incComp = incComp +1
+	end for
+		
+end for
+
+print("----- SUMMARY -----")
+print("FILE OBJECTS: "+incFile)
+print("SHELL OBJECTS: "+incShell)
+print("COMPUTER OBJECTS: "+incComp)
